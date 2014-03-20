@@ -1,3 +1,5 @@
 class ClasseProva{
+	
+	int var;
 
 }
