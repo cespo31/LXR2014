@@ -1,5 +1,0 @@
-class ClasseProva{
-	
-	int var;
-
-}
