@@ -6,7 +6,7 @@
 			<attribute name="owner.project.facets" value="java"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="var" path="CUP_RUNTIME_JAR"/>
 	<classpathentry kind="lib" path="java-cup-11a.jar"/>
+	<classpathentry kind="var" path="CUP_RUNTIME_JAR"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
