@@ -42,6 +42,21 @@ import java_cup.runtime.Symbol;
     void set_filename(String fname) {
 	filename = AbstractTable.stringtable.addString(fname);
     }
+    
+    /*
+    AbstractSymbol set_number_in_filename(String fname) {
+    filename = AbstractTable.inttable.addString(fname);
+    return filename;
+    }
+    */
+    
+    /*
+    AbstractSymbol set_identifier_in_filename(String fname) {
+    filename = AbstractTable.idtable.addString(fname);
+    return filename;
+    }
+    */
+    
 
     AbstractSymbol curr_filename() {
 	return filename;
@@ -67,11 +82,11 @@ import java_cup.runtime.Symbol;
  *  work.  */
 
     switch(yystate()) {
-    case COMMENT:
-	
-	break;
     case YYINITIAL:
 		/* nothing special to do in the initial state */
+	break;
+	case COMMENT:
+	
 	break;
 	case STRING:
 		
@@ -90,7 +105,7 @@ Letter = [a-zA-Z_]
 
 InputCharacter = [^\r\n]
 
-Identifier = {Letter}+
+
 Identifier_type = [A-Z]({Letter}|{Digit})*
 Identifier_object = [a-z]({Letter}|{Digit})*
 
@@ -133,11 +148,11 @@ NormalComment = "(*"(.\n)*"*)"
 
 <YYINITIAL> {
 	/* identifiers */
-	{Identifier_type}	{return new Symbol(TokenConstants.TYPEID);}
-	{Identifier_object}	{return new Symbol(TokenConstants.OBJECTID);}
+	{Identifier_type}	{return new Symbol(TokenConstants.TYPEID,AbstractTable.idtable.addString(yytext()));}
+	{Identifier_object}	{return new Symbol(TokenConstants.OBJECTID,AbstractTable.idtable.addString(yytext()));}
 	
 	/* number */
-	{Digits}			{return new Symbol(TokenConstants.INT_CONST);}					
+	{Digits}			{return new Symbol(TokenConstants.INT_CONST,AbstractTable.inttable.addString(yytext()));}					
 	
 	/* operators */
 	"+"					{return new Symbol(TokenConstants.PLUS);}
@@ -167,6 +182,10 @@ NormalComment = "(*"(.\n)*"*)"
 	{LineComment}		{/* ignore this */}
 	
 	//manca ERROR e STR_CONST
+
+	"(*"				{yybegin(COMMENT);}
+	
+	"*)"				{return new Symbol(TokenConstants.ERROR,"Unmatched *)");}
 }	
 
 
