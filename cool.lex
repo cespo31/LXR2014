@@ -23,6 +23,7 @@ import java_cup.runtime.Symbol;
 
     //our variables
     private int open_comments = 0;
+    private boolean stringlen_ok = true;
     
     // Max size of string constants
     static int MAX_STR_CONST = 1025;
@@ -92,8 +93,8 @@ import java_cup.runtime.Symbol;
 		return new Symbol(TokenConstants.ERROR, "EOF in comment"); 
 	//break;
 	case STRING:
-		
-	break;
+		return new Symbol(TokenConstants.ERROR, "EOF in string constant"); 
+	//break;
 	}
     return new Symbol(TokenConstants.EOF);
 %eofval}
@@ -102,7 +103,7 @@ LineTerminator = \n
 WhiteSpace = [ \f\v\t\r]
 
 Digit = [0-9]
-Digits = [1-9]{Digit}*
+Digits = 0 | [1-9]{Digit}*
 
 Letter = [a-zA-Z_]
 
@@ -185,7 +186,9 @@ LineComment = "--"{InputCharacter}*({LineTerminator}|EOF)
 	
 	"*)"				{return new Symbol(TokenConstants.ERROR,"Unmatched *)");}
 	
-	\"					{yybegin(STRING);}
+	\"					{
+						yybegin(STRING);
+						}
 }	
 
 
@@ -199,20 +202,63 @@ LineComment = "--"{InputCharacter}*({LineTerminator}|EOF)
 						}
 	
 	{LineTerminator}	{curr_lineno++;}
+	
 	.					{/* ignore this */}
 }
 
 
 //DOBBIAMO METTERE STRINGHE
 
-/*
+
 <STRING>{
 
-}
-*/
+	\"					{
+						yybegin(YYINITIAL);
+						set_filename(string_buf.toString());
+						string_buf.delete(0,string_buf.length());
+						return new Symbol(TokenConstants.STR_CONST,curr_filename());
+						}
 
+	\\\[n]				{
+						//if(stringlen_ok==true && string_buf.length>=MAX_STR_CONST)
+						string_buf.append('\n');
+						}
+	
+	\0					{return new Symbol(TokenConstants.ERROR,"String contains null character");}
+
+	\{LineTerminator}	{string_buf.append("\n");}
+
+	\\[b]				{string_buf.append("\b");}
+	
+	\\[t]				{string_buf.append("\t");}
+	
+	\\[f]				{string_buf.append("\f");}
+
+	\\\"				{string_buf.append("\"");}
+	
+	\\					{/* ignore this */}
+	
+	{LineTerminator}	{
+						curr_lineno++;	
+						return new Symbol(TokenConstants.ERROR,"Unterminated string constant");
+						}
+	
+	//\\[a-zA-Z]			{string_buf.append(yytext().substring(1));}
+	
+	\\.					{string_buf.append(yytext().substring(1));} //alternativa a quello commentato sopra. Ma serve davvero???
+	
+	[^\n\r]				{string_buf.append(yytext());}	
+
+}
+
+
+//il resto, da errore
 .						{ /* This rule should be the very last
 						in your lexical specification and
 						will match match everything not
 						matched by other lexical rules. */
-						System.err.println("LEXER BUG - UNMATCHED: " + yytext()); }
+						System.err.println("LEXER BUG - UNMATCHED: " + yytext());
+						return new Symbol(TokenConstants.ERROR, yytext());}
+
+						
+//NOTE: QUANDO LANCIAMO UN TOKEN DI ERRORE, DOBBIAMO TORNARE NELLO STATO INIZIALE E CONTINUARE
